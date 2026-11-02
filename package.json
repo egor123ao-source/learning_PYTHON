@@ -1,0 +1,13 @@
+{
+  "name": "kod-python-learning-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mobile-first Python learning PWA",
+  "scripts": {
+    "build": "node prepare-vercel.js",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f7f6f2">
+    <meta name="color-scheme" content="light dark">
+    <meta name="description" content="Изучайте Python с короткими уроками и практикой — в удобном темпе, даже офлайн.">
+    <title>Код — учись программировать</title>
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ru_RU">
+    <meta property="og:site_name" content="Код — учись программировать">
+    <meta property="og:title" content="Код — учись программировать">
+    <meta property="og:description" content="Изучайте Python с короткими уроками и практикой — в удобном темпе, даже офлайн.">
+    <meta property="og:image" content="/social-preview.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Код — короткие уроки программирования">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Код — учись программировать">
+    <meta name="twitter:description" content="Изучайте Python с короткими уроками и практикой — в удобном темпе, даже офлайн.">
+    <meta name="twitter:image" content="/social-preview.png">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Код — на главную" data-i18n-aria-label="homeLabel" data-nav="home">
+          <span class="brand-mark" aria-hidden="true">&lt;/&gt;</span>
+          <span>код<span class="brand-dot">.</span></span>
+        </a>
+        <button class="icon-button install-button" id="install-button" type="button" hidden aria-label="Установить приложение">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg>
+        </button>
+        <button class="icon-button" id="settings-button" type="button" aria-label="Настройки" title="Настройки">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="m19.4 15 .1.1a1.7 1.7 0 0 1-2.4 2.4l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a1.7 1.7 0 0 1-3.4 0v-.2a1.7 1.7 0 0 0-2.9-1.2l-.1.1a1.7 1.7 0 1 1-2.4-2.4l.1-.1a1.7 1.7 0 0 0-1.2-2.9H4a1.7 1.7 0 0 1 0-3.4h.2a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a1.7 1.7 0 1 1 2.4-2.4l.1.1a1.7 1.7 0 0 0 2.9-1.2V2a1.7 1.7 0 0 1 3.4 0v.2a1.7 1.7 0 0 0 2.9 1.2l.1-.1a1.7 1.7 0 1 1 2.4 2.4l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a1.7 1.7 0 0 1 0 3.4h-.2a1.7 1.7 0 0 0-1.2 2.9Z"/></svg>
+        </button>
+        <div class="avatar" aria-label="Ваш профиль" data-i18n-aria-label="profileLabel" data-i18n="profileInitial">У</div>
+      </header>
+
+      <main id="main-content" tabindex="-1">
+        <section class="screen active" id="home-screen" aria-labelledby="welcome-title">
+          <div class="welcome-row">
+            <div>
+              <p class="eyebrow" data-i18n="homeEyebrow">ТВОЙ ПУТЬ В IT</p>
+              <h1 id="welcome-title" data-i18n="welcome">Привет, будущий<br>разработчик <span class="wave">✌️</span></h1>
+              <p class="subtitle" data-i18n="homeSubtitle">Небольшой шаг сегодня — большой навык завтра.</p>
+            </div>
+            <div class="streak" aria-label="Серия занятий: 0 дней подряд">
+              <span class="streak-icon">🔥</span><strong id="streak-count">0</strong><span id="streak-unit">дней подряд</span>
+            </div>
+          </div>
+
+          <article class="continue-card">
+            <div class="card-topline"><span class="pill"><span class="status-dot"></span> <span data-i18n="inProgress">В ПРОЦЕССЕ</span></span><span class="course-level" data-i18n="beginner">НАЧАЛО</span></div>
+            <div class="course-heading">
+              <div>
+                <p class="course-label" data-i18n="firstLanguage">ТВОЙ ПЕРВЫЙ ЯЗЫК</p>
+                <h2 data-i18n="pythonForBeginners">Python с нуля</h2>
+                <p class="muted" data-i18n="learnAtYourPace">Понятно. Практично. В своём темпе.</p>
+              </div>
+              <div class="python-art" aria-hidden="true"><span>Py</span></div>
+            </div>
+            <div class="progress-meta"><span data-i18n="yourProgress">Твой прогресс</span><strong id="progress-label">0 из 90 уроков</strong></div>
+            <div class="progress-track" role="progressbar" aria-label="Прогресс курса" data-i18n-aria-label="courseTitle" aria-valuemin="0" aria-valuemax="90" aria-valuenow="0">
+              <span id="progress-bar"></span>
+            </div>
+            <button class="primary-button" type="button" data-open-lesson="1"><span data-i18n="continueLearning">Продолжить обучение</span> <span aria-hidden="true">→</span></button>
+          </article>
+
+          <section class="section-block" aria-labelledby="today-title">
+            <div class="section-heading"><div><p class="eyebrow" data-i18n="smallStep">МАЛЕНЬКИЙ ШАГ</p><h2 id="today-title" data-i18n="startToday">Начни сегодня</h2></div><span class="time-estimate" data-i18n="fiveMinutes">⏱ 5 минут</span></div>
+            <button class="daily-card" type="button" data-open-lesson="1">
+              <span class="daily-icon" aria-hidden="true">🐍</span>
+              <span class="daily-copy"><strong data-i18n="firstCode">Напиши первую строку кода</strong><span data-i18n="lessonOne">Урок 1 · Знакомство с Python</span></span>
+              <span class="arrow-circle" aria-hidden="true">→</span>
+            </button>
+          </section>
+
+          <section class="section-block why-block">
+            <div class="section-heading"><div><p class="eyebrow" data-i18n="yourGoal">ТВОЯ ЦЕЛЬ</p><h2 data-i18n="noOverload">Учись без перегруза</h2></div></div>
+            <div class="benefit-grid">
+              <div class="benefit"><span>🧩</span><strong data-i18n="shortLessons">Короткие уроки</strong><small data-i18n="oneTopic">Одна тема за раз</small></div>
+              <div class="benefit"><span>🧠</span><strong data-i18n="practice">Практика</strong><small data-i18n="reinforce">Закрепляй знания</small></div>
+              <div class="benefit"><span>📱</span><strong data-i18n="everywhere">Везде с тобой</strong><small data-i18n="evenOffline">Учись даже офлайн</small></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="screen" id="course-screen" aria-labelledby="course-title" hidden>
+          <div class="page-intro"><p class="eyebrow" data-i18n="roadmap">ТВОЯ ДОРОЖНАЯ КАРТА</p><h1 id="course-title" data-i18n="courseTitle">Курс Python</h1><p class="subtitle" data-i18n="courseSubtitle">От первой команды до небольших программ.</p></div>
+          <div class="level-picker" id="level-picker" aria-label="Уровни Python"></div>
+          <div class="course-summary">
+            <div class="summary-icon">🐍</div><div><strong id="level-title">Начало пути</strong><p id="level-description">Основы языка, структуры данных, функции и первый проект.</p></div><span class="summary-badge" id="level-count">0 из 30 уроков</span>
+          </div>
+          <div class="lesson-list" id="lesson-list" aria-label="Уроки курса" data-i18n-aria-label="lessonListLabel"></div>
+        </section>
+
+        <section class="screen" id="progress-screen" aria-labelledby="progress-title" hidden>
+          <div class="page-intro"><p class="eyebrow" data-i18n="progressEyebrow">ТЫ УЖЕ МОЛОДЕЦ</p><h1 id="progress-title" data-i18n="progressTitle">Мой прогресс</h1><p class="subtitle" data-i18n="progressSubtitle">Каждый пройденный урок приближает к цели.</p></div>
+          <article class="progress-card">
+            <div class="progress-ring" id="progress-ring"><div><strong id="progress-percent">0%</strong><span data-i18n="courseProgress">курса</span></div></div>
+            <div><p class="eyebrow" data-i18n="yourResult">ТВОЙ РЕЗУЛЬТАТ</p><h2 id="progress-detail">0 из 90 уроков</h2><p class="muted" data-i18n="keepGoing">Продолжай в своём темпе!</p></div>
+          </article>
+          <div class="stats-grid">
+            <div class="stat-card"><span>✅</span><strong id="completed-stat">0</strong><small data-i18n="lessonsCompleted">уроков пройдено</small></div>
+            <div class="stat-card"><span>🔥</span><strong id="streak-stat">1 день</strong><small data-i18n="currentStreak">текущая серия</small></div>
+          </div>
+          <div class="encouragement"><span>🌱</span><div><strong data-i18n="firstStep">Всё начинается с первого шага</strong><p data-i18n="fiveMinutesPractice">Даже 5 минут практики — это уже прогресс. Ты справишься!</p></div></div>
+        </section>
+
+        <section class="screen" id="settings-screen" aria-labelledby="settings-title" hidden>
+          <div class="page-intro"><p class="eyebrow" data-i18n="settingsEyebrow">ПОД ТЕБЯ</p><h1 id="settings-title" data-i18n="settingsTitle">Настройки</h1><p class="subtitle" data-i18n="settingsSubtitle">Настрой приложение для себя.</p></div>
+          <div class="settings-card">
+            <label for="language-select" data-i18n="languageLabel">Язык приложения</label>
+            <p class="muted" data-i18n="languageDescription">Выбери язык интерфейса и уроков.</p>
+            <select id="language-select" class="language-select" aria-label="Язык приложения" data-i18n-aria-label="languageLabel">
+              <option value="ru">Русский</option>
+              <option value="en">English</option>
+            </select>
+            <div class="settings-divider"></div>
+            <label for="theme-select" data-i18n="themeLabel">Тема оформления</label>
+            <p class="muted" data-i18n="themeDescription">Выбери светлую или тёмную тему.</p>
+            <select id="theme-select" class="language-select" aria-label="Тема оформления" data-i18n-aria-label="themeLabel">
+              <option value="light" data-i18n="lightTheme">Светлая</option>
+              <option value="dark" data-i18n="darkTheme">Тёмная</option>
+            </select>
+            <div class="settings-divider"></div>
+            <a class="privacy-link" href="privacy.html" data-i18n="privacyPolicy">Политика конфиденциальности</a>
+          </div>
+        </section>
+
+        <section class="screen lesson-screen" id="lesson-screen" aria-labelledby="lesson-title" hidden>
+          <button class="back-button" id="back-to-course" type="button"><span aria-hidden="true">←</span> <span data-i18n="courseBackLabel">К курсу</span></button>
+          <div id="lesson-content"></div>
+        </section>
+      </main>
+
+      <nav class="bottom-nav" aria-label="Основная навигация" data-i18n-aria-label="mainNavigation">
+        <button class="nav-item active" type="button" data-nav="home" aria-current="page"><span class="nav-icon">⌂</span><span data-i18n="homeNav">Главная</span></button>
+        <button class="nav-item" type="button" data-nav="course"><span class="nav-icon">▤</span><span data-i18n="learningNav">Обучение</span></button>
+        <button class="nav-item" type="button" data-nav="progress"><span class="nav-icon">◷</span><span data-i18n="progressTitle">Прогресс</span></button>
+      </nav>
+      <aside class="consent-banner" id="consent-banner" aria-label="Настройки аналитики" data-i18n-aria-label="analyticsConsent" hidden>
+        <div><strong data-i18n="analyticsHeading">Помогите сделать приложение лучше</strong><p data-i18n="analyticsText">Яндекс Метрика собирает обезличенную статистику посещений. Вы можете согласиться или отказаться.</p></div>
+        <div class="consent-actions">
+          <button class="consent-button consent-accept" id="consent-accept" type="button" data-i18n="accept">Согласиться</button>
+          <button class="consent-button" id="consent-reject" type="button" data-i18n="reject">Отказаться</button>
+        </div>
+      </aside>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+    <script src="config.js" defer></script>
+    <script src="translations.js" defer></script>
+    <script src="course-catalog.js" defer></script>
+    <script src="app.js" defer></script>
+  </body>
+</html>
