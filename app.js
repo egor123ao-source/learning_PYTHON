@@ -196,6 +196,8 @@ const streakStorageKey = "kod-python-streak-v1";
 const consentKey = "kod-analytics-consent-v1";
 const languageKey = "kod-app-language-v1";
 const screens = ["home", "course", "progress", "settings", "lesson"];
+let activeAccountId = null;
+let accountUser = null;
 let progress = loadProgress();
 let learningStreak = loadLearningStreak();
 let activeLesson = null;
@@ -209,6 +211,10 @@ let pythonWorker = null;
 let pythonRunId = 0;
 let pythonRunTimeout;
 let pythonRuntimeReady = false;
+let cloudSyncTimer;
+let cloudSyncInProgress = false;
+let cloudSyncRequested = false;
+let recoveryMode = false;
 
 function loadLanguage() {
   try {
@@ -292,7 +298,26 @@ function translate(key, values = {}) {
     lessonLocked: "Сначала пройди предыдущие уроки.",
     levelProgress: "{count} из 30 уроков",
     levelUnlocked: "Доступен",
-    levelLocked: "Закрыт"
+    levelLocked: "Закрыт",
+    accountNotConfigured: "Сервис аккаунтов ещё не настроен. Следуйте инструкции Supabase в README.",
+    accountServiceUnavailable: "Не удалось загрузить сервис входа. Проверьте подключение и перезагрузите страницу.",
+    accountInvalidConfig: "Настройки Supabase некорректны. Проверьте URL проекта и публичный anon key.",
+    accountChecking: "Проверяем аккаунт…",
+    accountGuest: "Вы не вошли. Прогресс хранится на этом устройстве.",
+    accountSignedIn: "Вы вошли как {email}",
+    accountSyncing: "Синхронизируем прогресс…",
+    accountSynced: "Прогресс синхронизирован.",
+    accountSyncError: "Не удалось синхронизировать прогресс. Локальные данные сохранены; проверьте сеть и настройку базы.",
+    accountEmailRequired: "Сначала укажите адрес почты.",
+    accountPasswordRequired: "Введите пароль.",
+    accountPasswordTooShort: "Пароль должен содержать не менее 12 символов.",
+    accountConfirmationSent: "Проверьте почту и подтвердите адрес, чтобы завершить регистрацию.",
+    accountResetSent: "Если аккаунт с таким адресом существует, ссылка для сброса пароля отправлена.",
+    accountRecoveryReady: "Укажите новый пароль.",
+    accountPasswordUpdated: "Пароль изменён.",
+    accountAuthError: "Не удалось выполнить запрос: {message}",
+    accountSignedOut: "Вы вышли из аккаунта.",
+    accountSessionError: "Не удалось восстановить вход. Войдите в аккаунт снова."
   };
   const template = currentLanguage === "en"
     ? window.APP_TRANSLATIONS?.en?.ui?.[key]
@@ -341,6 +366,7 @@ function applyLanguage() {
   document.getElementById("language-select").value = currentLanguage;
   document.getElementById("theme-select").value = currentTheme;
   document.title = currentLanguage === "en" ? "Code — learn to program" : "Код — учись программировать";
+  renderAccountState();
   updateProgress();
   renderLevelPicker();
   renderLessonList();
@@ -405,9 +431,13 @@ function isLessonUnlocked(lesson) {
   return currentLevel.lessons.slice(0, lessonIndex).every(item => progress.completed.includes(item.id));
 }
 
-function loadProgress() {
+function getScopedStorageKey(key, userId = activeAccountId) {
+  return userId ? `${key}:user:${userId}` : key;
+}
+
+function normalizeProgress(saved) {
   try {
-    const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
+    if (!saved || typeof saved !== "object" || Array.isArray(saved)) saved = {};
     const completed = Array.isArray(saved.completed)
       ? saved.completed.filter(id => lessons.some(lesson => lesson.id === id))
       : [];
@@ -432,18 +462,29 @@ function loadProgress() {
   }
 }
 
-function saveProgress() {
+function loadProgress(userId = activeAccountId) {
   try {
-    localStorage.setItem(storageKey, JSON.stringify(progress));
+    const saved = JSON.parse(localStorage.getItem(getScopedStorageKey(storageKey, userId)) || "{}");
+    return normalizeProgress(saved);
+  } catch (error) {
+    console.error("Не удалось загрузить прогресс обучения:", error);
+    return { completed: [], quiz: {} };
+  }
+}
+
+function saveProgress(syncToCloud = true) {
+  try {
+    localStorage.setItem(getScopedStorageKey(storageKey), JSON.stringify(progress));
   } catch (error) {
     console.error("Не удалось сохранить прогресс обучения:", error);
     showToast(translate("saveProgressError"));
   }
+  if (syncToCloud) scheduleCloudSync();
 }
 
-function loadLearningStreak() {
+function normalizeLearningStreak(saved) {
   try {
-    const saved = JSON.parse(localStorage.getItem(streakStorageKey) || "{}");
+    if (!saved || typeof saved !== "object" || Array.isArray(saved)) saved = {};
     const lastStudyDate = typeof saved.lastStudyDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(saved.lastStudyDate)
       ? saved.lastStudyDate
       : "";
@@ -457,13 +498,24 @@ function loadLearningStreak() {
   }
 }
 
-function saveLearningStreak() {
+function loadLearningStreak(userId = activeAccountId) {
   try {
-    localStorage.setItem(streakStorageKey, JSON.stringify(learningStreak));
+    const saved = JSON.parse(localStorage.getItem(getScopedStorageKey(streakStorageKey, userId)) || "{}");
+    return normalizeLearningStreak(saved);
+  } catch (error) {
+    console.error("Не удалось загрузить серию занятий:", error);
+    return { days: 0, lastStudyDate: "" };
+  }
+}
+
+function saveLearningStreak(syncToCloud = true) {
+  try {
+    localStorage.setItem(getScopedStorageKey(streakStorageKey), JSON.stringify(learningStreak));
   } catch (error) {
     console.error("Не удалось сохранить серию занятий:", error);
     showToast(translate("saveProgressError"));
   }
+  if (syncToCloud) scheduleCloudSync();
 }
 
 function getLocalDateKey(date = new Date()) {
@@ -505,6 +557,301 @@ function getStreakUnit(days) {
   if (category === "one") return translate("streakDayOne");
   if (category === "few") return translate("streakDayFew");
   return translate("streakDayMany");
+}
+
+function mergeProgress(localProgress, remoteProgress) {
+  const local = normalizeProgress(localProgress);
+  const remote = normalizeProgress(remoteProgress);
+  const quiz = { ...local.quiz };
+  Object.entries(remote.quiz).forEach(([lessonId, remoteResult]) => {
+    const localResult = quiz[lessonId];
+    if (!localResult || remoteResult.questionIndex > localResult.questionIndex ||
+      (remoteResult.questionIndex === localResult.questionIndex && remoteResult.passed && !localResult.passed)) {
+      quiz[lessonId] = remoteResult;
+    }
+  });
+  return {
+    completed: [...new Set([...local.completed, ...remote.completed])],
+    quiz
+  };
+}
+
+function mergeLearningStreak(localStreak, remoteStreak) {
+  const local = normalizeLearningStreak(localStreak);
+  const remote = normalizeLearningStreak(remoteStreak);
+  return remote.lastStudyDate > local.lastStudyDate ? remote : local;
+}
+
+function renderAccountState(messageKey) {
+  const guestControls = document.getElementById("account-guest-controls");
+  const userControls = document.getElementById("account-user-controls");
+  const recoveryControls = document.getElementById("account-recovery-controls");
+  const status = document.getElementById("account-status");
+  const authReady = Boolean(window.APP_AUTH);
+  const signedIn = Boolean(activeAccountId && accountUser);
+
+  guestControls.hidden = signedIn || recoveryMode;
+  userControls.hidden = !signedIn || recoveryMode;
+  recoveryControls.hidden = !recoveryMode;
+  document.getElementById("account-signed-in-email").textContent = accountUser?.email || "";
+  document.getElementById("account-signup").disabled = !authReady;
+  document.getElementById("account-login").disabled = !authReady;
+  document.getElementById("account-reset").disabled = !authReady;
+  document.getElementById("account-logout").disabled = !authReady;
+  document.getElementById("account-update-password").disabled = !authReady;
+
+  const fallbackMessage = !authReady
+    ? translate(window.APP_AUTH_STATUS === "unconfigured"
+      ? "accountNotConfigured"
+      : window.APP_AUTH_STATUS === "invalid"
+        ? "accountInvalidConfig"
+        : "accountServiceUnavailable")
+    : signedIn
+      ? translate("accountSignedIn", { email: accountUser.email })
+      : translate("accountGuest");
+  status.textContent = messageKey ? translate(messageKey) : fallbackMessage;
+}
+
+function renderCurrentProgress() {
+  updateProgress();
+  renderLevelPicker();
+  renderLessonList();
+}
+
+function mergeRemoteProgress(remote) {
+  progress = mergeProgress(progress, remote?.progress);
+  learningStreak = mergeLearningStreak(learningStreak, remote?.streak);
+  saveProgress(false);
+  saveLearningStreak(false);
+  renderCurrentProgress();
+}
+
+async function syncProgressToCloud() {
+  if (!window.APP_AUTH || !activeAccountId) return;
+  if (cloudSyncInProgress) {
+    cloudSyncRequested = true;
+    return;
+  }
+  cloudSyncInProgress = true;
+  const userId = activeAccountId;
+  document.getElementById("account-sync-status").textContent = translate("accountSyncing");
+  try {
+    const remote = await window.APP_AUTH.loadProgress();
+    if (activeAccountId !== userId) return;
+    mergeRemoteProgress(remote);
+    await window.APP_AUTH.saveProgress(userId, progress, learningStreak);
+    if (activeAccountId === userId) {
+      document.getElementById("account-sync-status").textContent = translate("accountSynced");
+    }
+  } catch (error) {
+    console.error("Не удалось синхронизировать прогресс с Supabase:", error);
+    if (activeAccountId === userId) {
+      document.getElementById("account-sync-status").textContent = translate("accountSyncError");
+    }
+  } finally {
+    cloudSyncInProgress = false;
+    if (cloudSyncRequested && activeAccountId) {
+      cloudSyncRequested = false;
+      scheduleCloudSync();
+    }
+  }
+}
+
+function scheduleCloudSync() {
+  if (!window.APP_AUTH || !activeAccountId) return;
+  window.clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = window.setTimeout(syncProgressToCloud, 900);
+}
+
+async function handleAuthState(user, event) {
+  if (event === "PASSWORD_RECOVERY") {
+    recoveryMode = true;
+    renderAccountState("accountRecoveryReady");
+  } else if (recoveryMode && event === "SIGNED_IN") {
+    recoveryMode = false;
+  }
+
+  const nextAccountId = user?.id || null;
+  if (nextAccountId === activeAccountId) {
+    accountUser = user;
+    renderAccountState(event === "PASSWORD_RECOVERY" ? "accountRecoveryReady" : undefined);
+    return;
+  }
+
+  window.clearTimeout(cloudSyncTimer);
+  const guestProgress = activeAccountId ? null : progress;
+  const guestStreak = activeAccountId ? null : learningStreak;
+  activeAccountId = nextAccountId;
+  accountUser = user || null;
+
+  if (!activeAccountId) {
+    recoveryMode = false;
+    progress = loadProgress(null);
+    learningStreak = loadLearningStreak(null);
+    document.getElementById("account-sync-status").textContent = "";
+    renderAccountState(event === "SIGNED_OUT" ? "accountSignedOut" : undefined);
+    renderCurrentProgress();
+    return;
+  }
+
+  recoveryMode = false;
+  const scopedProgressKey = getScopedStorageKey(storageKey, activeAccountId);
+  let hasSavedAccountProgress = false;
+  try {
+    hasSavedAccountProgress = localStorage.getItem(scopedProgressKey) !== null;
+  } catch (error) {
+    console.error("Не удалось проверить локальный прогресс аккаунта:", error);
+  }
+  progress = loadProgress(activeAccountId);
+  learningStreak = loadLearningStreak(activeAccountId);
+  if (!hasSavedAccountProgress && guestProgress) {
+    progress = mergeProgress(progress, guestProgress);
+    learningStreak = mergeLearningStreak(learningStreak, guestStreak);
+  }
+  saveProgress(false);
+  saveLearningStreak(false);
+  renderAccountState();
+  renderCurrentProgress();
+
+  try {
+    const remote = await window.APP_AUTH.loadProgress();
+    if (activeAccountId !== nextAccountId) return;
+    mergeRemoteProgress(remote);
+    await window.APP_AUTH.saveProgress(nextAccountId, progress, learningStreak);
+    if (activeAccountId === nextAccountId) {
+      document.getElementById("account-sync-status").textContent = translate("accountSynced");
+    }
+  } catch (error) {
+    console.error("Не удалось загрузить прогресс аккаунта из Supabase:", error);
+    if (activeAccountId === nextAccountId) {
+      document.getElementById("account-sync-status").textContent = translate("accountSyncError");
+    }
+  }
+}
+
+function initializeAccount() {
+  renderAccountState();
+  if (!window.APP_AUTH) return;
+  document.getElementById("account-sync-status").textContent = translate("accountChecking");
+  window.APP_AUTH.onAuthStateChange((event, session) => {
+    window.setTimeout(() => {
+      handleAuthState(session?.user || null, event).catch(error => {
+        console.error("Не удалось применить состояние аккаунта:", error);
+        renderAccountState("accountSessionError");
+      });
+    }, 0);
+  });
+  window.APP_AUTH.getSession().then(({ data, error }) => {
+    if (error) throw error;
+    return handleAuthState(data.session?.user || null, "INITIAL_SESSION");
+  }).catch(error => {
+    console.error("Не удалось проверить сессию Supabase:", error);
+    renderAccountState("accountSessionError");
+    document.getElementById("account-sync-status").textContent = "";
+  });
+}
+
+function setAccountBusy(isBusy) {
+  ["account-signup", "account-login", "account-reset", "account-logout", "account-update-password"]
+    .forEach(id => { document.getElementById(id).disabled = isBusy || !window.APP_AUTH; });
+}
+
+function getAccountFormValues(requirePassword = true) {
+  const emailInput = document.getElementById("account-email");
+  const passwordInput = document.getElementById("account-password");
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+  if (!email || !emailInput.validity.valid) {
+    document.getElementById("account-status").textContent = translate("accountEmailRequired");
+    emailInput.focus();
+    return null;
+  }
+  if (requirePassword && !password) {
+    document.getElementById("account-status").textContent = translate("accountPasswordRequired");
+    passwordInput.focus();
+    return null;
+  }
+  return { email, password };
+}
+
+async function runAccountAction(action) {
+  if (!window.APP_AUTH) {
+    renderAccountState();
+    return;
+  }
+  setAccountBusy(true);
+  document.getElementById("account-status").textContent = translate("accountChecking");
+  try {
+    const result = await action();
+    if (result?.error) throw result.error;
+  } catch (error) {
+    console.error("Ошибка операции с аккаунтом Supabase:", error);
+    document.getElementById("account-status").textContent = translate("accountAuthError", {
+      message: error.message || "Unknown error"
+    });
+  } finally {
+    setAccountBusy(false);
+  }
+}
+
+async function createAccount() {
+  document.getElementById("account-password").autocomplete = "new-password";
+  const values = getAccountFormValues();
+  if (!values) return;
+  if (values.password.length < 12) {
+    document.getElementById("account-status").textContent = translate("accountPasswordTooShort");
+    return;
+  }
+  await runAccountAction(async () => {
+    const result = await window.APP_AUTH.signUp(values.email, values.password);
+    if (!result.error) {
+      document.getElementById("account-password").value = "";
+      if (!result.data.session) {
+        document.getElementById("account-status").textContent = translate("accountConfirmationSent");
+      }
+    }
+    return result;
+  });
+}
+
+async function signInAccount() {
+  document.getElementById("account-password").autocomplete = "current-password";
+  const values = getAccountFormValues();
+  if (!values) return;
+  await runAccountAction(async () => {
+    const result = await window.APP_AUTH.signIn(values.email, values.password);
+    if (!result.error) document.getElementById("account-password").value = "";
+    return result;
+  });
+}
+
+async function requestPasswordReset() {
+  const values = getAccountFormValues(false);
+  if (!values) return;
+  await runAccountAction(async () => {
+    const result = await window.APP_AUTH.sendPasswordReset(values.email);
+    if (!result.error) {
+      document.getElementById("account-status").textContent = translate("accountResetSent");
+    }
+    return result;
+  });
+}
+
+async function updateAccountPassword() {
+  const password = document.getElementById("account-new-password").value;
+  if (password.length < 12) {
+    document.getElementById("account-status").textContent = translate("accountPasswordTooShort");
+    return;
+  }
+  await runAccountAction(async () => {
+    const result = await window.APP_AUTH.updatePassword(password);
+    if (!result.error) {
+      recoveryMode = false;
+      document.getElementById("account-new-password").value = "";
+      renderAccountState("accountPasswordUpdated");
+    }
+    return result;
+  });
 }
 
 function navigate(screen) {
@@ -934,6 +1281,18 @@ document.addEventListener("keydown", event => {
 });
 document.getElementById("consent-accept").addEventListener("click", () => saveAnalyticsConsent("accepted"));
 document.getElementById("consent-reject").addEventListener("click", () => saveAnalyticsConsent("rejected"));
+document.getElementById("account-signup").addEventListener("click", createAccount);
+document.getElementById("account-login").addEventListener("click", signInAccount);
+document.getElementById("account-reset").addEventListener("click", requestPasswordReset);
+document.getElementById("account-update-password").addEventListener("click", updateAccountPassword);
+document.getElementById("account-logout").addEventListener("click", () => runAccountAction(() => window.APP_AUTH.signOut()));
+
+window.addEventListener("focus", () => {
+  if (activeAccountId) syncProgressToCloud();
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && activeAccountId) syncProgressToCloud();
+});
 
 window.addEventListener("beforeinstallprompt", event => {
   event.preventDefault();
@@ -954,6 +1313,7 @@ setTheme(currentTheme);
 applyLanguage();
 updateDomainMetadata();
 initializeAnalytics();
+initializeAccount();
 
 if ("serviceWorker" in navigator && location.protocol !== "file:") {
   window.addEventListener("load", () => {

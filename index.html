@@ -116,6 +116,35 @@
         <section class="screen" id="settings-screen" aria-labelledby="settings-title" hidden>
           <div class="page-intro"><p class="eyebrow" data-i18n="settingsEyebrow">ПОД ТЕБЯ</p><h1 id="settings-title" data-i18n="settingsTitle">Настройки</h1><p class="subtitle" data-i18n="settingsSubtitle">Настрой приложение для себя.</p></div>
           <div class="settings-card">
+            <section class="account-section" aria-labelledby="account-title">
+              <p class="eyebrow" data-i18n="accountEyebrow">ОБЛАЧНЫЙ АККАУНТ</p>
+              <h2 id="account-title" data-i18n="accountTitle">Аккаунт и синхронизация</h2>
+              <p class="muted" data-i18n="accountDescription">Подтверди почту, чтобы сохранять прогресс и открывать его на других устройствах.</p>
+              <p class="account-status" id="account-status" role="status" aria-live="polite"></p>
+              <p class="account-sync-status" id="account-sync-status" role="status" aria-live="polite"></p>
+              <div id="account-guest-controls">
+                <label for="account-email" data-i18n="accountEmailLabel">Электронная почта</label>
+                <input class="account-input" id="account-email" type="email" name="email" autocomplete="email" inputmode="email" maxlength="254" required>
+                <label for="account-password" data-i18n="accountPasswordLabel">Пароль</label>
+                <input class="account-input" id="account-password" type="password" name="password" autocomplete="current-password" maxlength="128" required>
+                <p class="account-hint" data-i18n="accountPasswordHint">Для нового аккаунта используйте пароль длиной не менее 12 символов.</p>
+                <div class="account-actions">
+                  <button class="primary-button account-button" id="account-signup" type="button" data-i18n="accountSignup">Создать аккаунт</button>
+                  <button class="secondary-button account-button" id="account-login" type="button" data-i18n="accountLogin">Войти</button>
+                  <button class="text-button" id="account-reset" type="button" data-i18n="accountReset">Забыли пароль?</button>
+                </div>
+              </div>
+              <div id="account-recovery-controls" hidden>
+                <label for="account-new-password" data-i18n="accountNewPasswordLabel">Новый пароль</label>
+                <input class="account-input" id="account-new-password" type="password" autocomplete="new-password" minlength="12" maxlength="128">
+                <button class="primary-button account-button" id="account-update-password" type="button" data-i18n="accountUpdatePassword">Сохранить новый пароль</button>
+              </div>
+              <div id="account-user-controls" hidden>
+                <p class="account-email" id="account-signed-in-email"></p>
+                <button class="secondary-button account-button" id="account-logout" type="button" data-i18n="accountLogout">Выйти</button>
+              </div>
+            </section>
+            <div class="settings-divider"></div>
             <label for="language-select" data-i18n="languageLabel">Язык приложения</label>
             <p class="muted" data-i18n="languageDescription">Выбери язык интерфейса и уроков.</p>
             <select id="language-select" class="language-select" aria-label="Язык приложения" data-i18n-aria-label="languageLabel">
@@ -157,6 +186,8 @@
     <script src="config.js" defer></script>
     <script src="translations.js" defer></script>
     <script src="course-catalog.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous" defer></script>
+    <script src="auth.js" defer></script>
     <script src="app.js" defer></script>
   </body>
 </html>

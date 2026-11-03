@@ -1,4 +1,4 @@
-const CACHE_NAME = "kod-python-v12";
+const CACHE_NAME = "kod-python-v14";
 const APP_FILES = [
   "./",
   "./index.html",
@@ -9,6 +9,7 @@ const APP_FILES = [
   "./course-catalog.js",
   "./python-worker.js",
   "./config.js",
+  "./auth.js",
   "./manifest.json",
   "./icon.svg",
   "./icon-192.png",

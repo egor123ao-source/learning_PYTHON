@@ -17,7 +17,7 @@ const mimeTypes = {
 };
 const publicFiles = new Set([
   "index.html", "styles.css", "app.js", "translations.js", "course-catalog.js",
-  "python-worker.js", "config.js", "manifest.json", "sw.js", "icon.svg", "robots.txt", "404.html", "privacy.html",
+  "python-worker.js", "config.js", "auth.js", "manifest.json", "sw.js", "icon.svg", "robots.txt", "404.html", "privacy.html",
   "icon-192.png", "icon-512.png", "social-preview.png"
 ]);
 

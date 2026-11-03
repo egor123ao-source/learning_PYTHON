@@ -38,6 +38,16 @@ button:focus-visible, a:focus-visible { outline: 3px solid #83c9a8; outline-offs
 .settings-card { padding: 18px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
 .settings-card label { display: block; margin-bottom: 7px; font-size: 14px; font-weight: 700; }
 .settings-card .muted { margin-bottom: 14px; font-size: 12px; }
+.account-section h2 { margin-bottom: 7px; font-size: 17px; }
+.account-status, .account-sync-status { min-height: 18px; margin: 0 0 10px; color: var(--muted); font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
+.account-sync-status { color: var(--green); }
+.account-input { width: 100%; min-height: 48px; margin: 0 0 13px; padding: 0 13px; border: 1px solid var(--line); border-radius: 12px; color: var(--ink); background: var(--surface); font: inherit; font-size: 14px; }
+.account-hint { margin: -5px 0 13px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.account-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+.account-button { width: auto; min-height: 43px; margin: 0; padding: 0 15px; font-size: 11px; }
+.account-button:disabled { opacity: .55; cursor: not-allowed; }
+.text-button { min-height: 42px; padding: 0 8px; border: 0; color: var(--green); background: transparent; font-size: 11px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.account-email { margin: 0 0 12px; font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
 .settings-divider { height: 1px; margin: 20px 0; background: var(--line); }
 .privacy-link { display: inline-flex; min-height: 42px; align-items: center; color: var(--green); font-size: 12px; font-weight: 700; text-decoration: none; }
 .privacy-link:hover { text-decoration: underline; }
