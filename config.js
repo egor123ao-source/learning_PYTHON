@@ -1,4 +1,5 @@
 window.APP_CONFIG = {
+  authProvider: "local",
   domain: "",
   yandexMetrikaId: "",
   supabaseUrl: "https://oevmdecyykgndjhzmxfg.supabase.co",

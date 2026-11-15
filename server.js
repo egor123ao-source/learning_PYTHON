@@ -1,6 +1,8 @@
 const http = require("node:http");
 const path = require("node:path");
 const fs = require("node:fs");
+const { createAuthApi } = require("./auth-server");
+const authApi = createAuthApi();
 
 const root = __dirname;
 const port = Number(process.env.PORT || 3000);
@@ -16,7 +18,7 @@ const mimeTypes = {
   ".webmanifest": "application/manifest+json"
 };
 const publicFiles = new Set([
-  "index.html", "styles.css", "app.js", "translations.js", "course-catalog.js",
+  "index.html", "learn.html", "platform.css", "platform.js", "local-auth.js", "styles.css", "app.js", "translations.js", "course-catalog.js",
   "python-worker.js", "config.js", "auth.js", "manifest.json", "sw.js", "icon.svg", "robots.txt", "404.html", "privacy.html",
   "icon-192.png", "icon-512.png", "social-preview.png"
 ]);
@@ -73,7 +75,10 @@ function serveStatic(request, response, pathname) {
   });
 }
 
-const server = http.createServer((request, response) => {
+const server = http.createServer(async (request, response) => {
+  response.setHeader("X-Frame-Options", "DENY");
+  response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.setHeader("Cache-Control", "no-cache");
   let pathname;
   try {
     pathname = new URL(request.url, "http://localhost").pathname;
@@ -82,7 +87,8 @@ const server = http.createServer((request, response) => {
     response.end("Invalid URL.");
     return;
   }
-  serveStatic(request, response, pathname);
+  if (!await authApi.handle(request, response, pathname)) serveStatic(request, response, pathname);
 });
+server.on("close", () => authApi.close());
 
 server.listen(port, () => console.log(`Python learning app listening on http://localhost:${port}`));

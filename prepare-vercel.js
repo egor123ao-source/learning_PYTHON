@@ -1,13 +1,24 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const outputDirectory = process.env.VERCEL_OUTPUT_DIR || __dirname;
+const outputDirectory = process.env.VERCEL_OUTPUT_DIR || path.join(__dirname, "dist");
+const publicFiles = [
+  "index.html", "learn.html", "platform.css", "platform.js", "local-auth.js",
+  "styles.css", "app.js", "translations.js", "course-catalog.js", "python-worker.js",
+  "config.js", "auth.js", "manifest.json", "sw.js", "icon.svg", "robots.txt",
+  "404.html", "privacy.html", "icon-192.png", "icon-512.png", "social-preview.png"
+];
+if (process.env.VERCEL_ENV && /authProvider:\s*["']local["']/.test(fs.readFileSync(path.join(__dirname, "config.js"), "utf8"))) {
+  throw new Error("Local SQLite auth requires the Node server. Configure working Supabase auth before static Vercel deployment. See PLATFORM.md.");
+}
+fs.mkdirSync(outputDirectory, { recursive: true });
+for (const file of publicFiles) fs.copyFileSync(path.join(__dirname, file), path.join(outputDirectory, file));
 const indexPath = path.join(outputDirectory, "index.html");
 const environment = process.env.VERCEL_ENV;
 const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
 
 if (!environment) {
-  console.log("Vercel environment not detected; leaving static metadata unchanged.");
+  console.log("Public assets built in dist. Local registration requires npm start (Node server).");
   process.exit(0);
 }
 

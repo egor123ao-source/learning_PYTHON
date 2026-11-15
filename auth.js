@@ -1,5 +1,6 @@
 (function () {
   const config = window.APP_CONFIG || {};
+  if (config.authProvider === "local") return;
   const configured = Boolean(config.supabaseUrl && config.supabaseAnonKey);
 
   if (!configured) {

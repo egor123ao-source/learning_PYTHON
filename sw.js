@@ -1,7 +1,11 @@
-const CACHE_NAME = "kod-python-v14";
+const CACHE_NAME = "kod-python-v15";
 const APP_FILES = [
   "./",
   "./index.html",
+  "./learn.html",
+  "./platform.css",
+  "./platform.js",
+  "./local-auth.js",
   "./privacy.html",
   "./styles.css",
   "./app.js",
@@ -32,6 +36,7 @@ self.addEventListener("activate", event => {
 });
 
 self.addEventListener("fetch", event => {
+  if (new URL(event.request.url).pathname.startsWith("/api/")) return;
   if (event.request.method !== "GET" || new URL(event.request.url).origin !== self.location.origin) return;
   event.respondWith(
     caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {

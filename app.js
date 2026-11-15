@@ -366,6 +366,16 @@ function applyLanguage() {
   document.getElementById("language-select").value = currentLanguage;
   document.getElementById("theme-select").value = currentTheme;
   document.title = currentLanguage === "en" ? "Code — learn to program" : "Код — учись программировать";
+  if (window.APP_CONFIG?.authProvider === "local") {
+    document.querySelector('[data-i18n="accountDescription"]').textContent = currentLanguage === "en"
+      ? "Sign in to keep your lesson progress on this server."
+      : "Войдите, чтобы сохранять прогресс уроков в своём аккаунте.";
+    ["account-email", "account-password"].forEach(id => {
+      document.getElementById(id).hidden = true;
+      document.querySelector('label[for="' + id + '"]').hidden = true;
+    });
+    document.querySelector('[data-i18n="accountPasswordHint"]').hidden = true;
+  }
   renderAccountState();
   updateProgress();
   renderLevelPicker();
@@ -795,6 +805,7 @@ async function runAccountAction(action) {
 }
 
 async function createAccount() {
+  if (window.APP_CONFIG?.authProvider === "local") { location.href = "./#signup"; return; }
   document.getElementById("account-password").autocomplete = "new-password";
   const values = getAccountFormValues();
   if (!values) return;
@@ -815,6 +826,7 @@ async function createAccount() {
 }
 
 async function signInAccount() {
+  if (window.APP_CONFIG?.authProvider === "local") { location.href = "./#login"; return; }
   document.getElementById("account-password").autocomplete = "current-password";
   const values = getAccountFormValues();
   if (!values) return;
@@ -826,6 +838,7 @@ async function signInAccount() {
 }
 
 async function requestPasswordReset() {
+  if (window.APP_CONFIG?.authProvider === "local") { location.href = "./#reset"; return; }
   const values = getAccountFormValues(false);
   if (!values) return;
   await runAccountAction(async () => {
