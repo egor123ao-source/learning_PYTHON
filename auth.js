@@ -41,6 +41,8 @@
   }
 
   window.APP_AUTH_STATUS = "ready";
+  // Both pages return to the landing page, where confirmation and recovery are handled.
+  const redirectTo = new URL("./", window.location.href).href;
   window.APP_AUTH = {
     client,
     isConfigured: true,
@@ -48,7 +50,7 @@
       return client.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: window.location.origin + window.location.pathname }
+        options: { emailRedirectTo: redirectTo }
       });
     },
     async signIn(email, password) {
@@ -56,7 +58,7 @@
     },
     async sendPasswordReset(email) {
       return client.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + window.location.pathname
+        redirectTo
       });
     },
     async updatePassword(password) {

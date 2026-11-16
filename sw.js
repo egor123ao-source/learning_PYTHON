@@ -1,4 +1,4 @@
-const CACHE_NAME = "kod-python-v15";
+const CACHE_NAME = "kod-python-v16";
 const APP_FILES = [
   "./",
   "./index.html",
@@ -36,6 +36,8 @@ self.addEventListener("activate", event => {
 });
 
 self.addEventListener("fetch", event => {
+  // Authentication callback codes must not be persisted in the offline cache.
+  if (new URL(event.request.url).searchParams.has("code")) return;
   if (new URL(event.request.url).pathname.startsWith("/api/")) return;
   if (event.request.method !== "GET" || new URL(event.request.url).origin !== self.location.origin) return;
   event.respondWith(

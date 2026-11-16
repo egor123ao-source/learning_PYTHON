@@ -18,7 +18,7 @@ const environment = process.env.VERCEL_ENV;
 const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
 
 if (!environment) {
-  console.log("Public assets built in dist. Local registration requires npm start (Node server).");
+  console.log("Public assets built in dist. Supabase auth works with static hosting; local auth requires the Node server.");
   process.exit(0);
 }
 
