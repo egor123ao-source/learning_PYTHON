@@ -7,15 +7,77 @@ const vm = require("node:vm");
 const { spawnSync } = require("node:child_process");
 const root = path.join(__dirname, "..");
 
-function adapter(client) {
-  const context = { URL, console, window: {
+function adapter(client, fetchImpl) {
+  const context = { URL, console, AbortSignal, fetch: fetchImpl, window: {
     APP_CONFIG: { authProvider: "supabase", supabaseUrl: "https://test.supabase.co", supabaseAnonKey: "public-key" },
     location: { href: "https://learningpython.vercel.app/learn.html" },
-    supabase: { createClient: () => client }
+    supabase: { createClient: (url, key, options) => {
+      assert.equal(options.auth.flowType, "pkce");
+      assert.equal(options.auth.detectSessionInUrl, true);
+      return client;
+    } }
   } };
   vm.runInNewContext(fs.readFileSync(path.join(root, "auth.js"), "utf8"), context);
   return context.window.APP_AUTH;
 }
+test("OAuth uses PKCE client and returns all three providers to the landing page", async () => {
+  const calls = [];
+  const auth = adapter({ auth: {
+    signInWithOAuth: async values => {
+      calls.push(values);
+      return { data: { url: "https://test.supabase.co/auth/v1/authorize?provider=" + values.provider }, error: null };
+    }
+  } }, async (url, options) => {
+    assert.equal(String(url), "https://test.supabase.co/auth/v1/settings");
+    assert.equal(options.headers.apikey, "public-key");
+    assert.equal(options.cache, "no-store");
+    return { ok: true, json: async () => ({ external: { google: true, discord: true, apple: true } }) };
+  });
+  for (const provider of ["google", "discord", "apple"]) {
+    const result = await auth.signInWithProvider(provider);
+    assert.equal(result.error, null);
+    assert.equal(calls.at(-1).provider, provider);
+    assert.equal(calls.at(-1).options.redirectTo, "https://learningpython.vercel.app/?auth=oauth");
+    assert.equal(calls.at(-1).options.skipBrowserRedirect, true);
+  }
+});
+test("OAuth blocks disabled and unknown providers, and retries after a provider is enabled", async () => {
+  let enabled = false, requested = 0, started = 0;
+  const auth = adapter({ auth: {
+    signInWithOAuth: async () => {
+      started++;
+      return { data: { url: "https://test.supabase.co/auth/v1/authorize" }, error: null };
+    }
+  } }, async () => {
+    requested++;
+    return { ok: true, json: async () => ({ external: { google: enabled } }) };
+  });
+  await assert.rejects(auth.signInWithProvider("github"), /Неизвестный/);
+  await assert.rejects(auth.signInWithProvider("__proto__"), /Неизвестный/);
+  assert.equal(requested, 0);
+  await assert.rejects(auth.signInWithProvider("google"), /пока не подключён/);
+  assert.equal(started, 0);
+  enabled = true;
+  await auth.signInWithProvider("google");
+  assert.equal(started, 1);
+  assert.equal(requested, 2);
+});
+test("OAuth fails safely on settings errors and unsafe redirect URLs", async () => {
+  let started = false;
+  const client = { auth: { signInWithOAuth: async () => {
+    started = true;
+    return { data: { url: "https://example.test/phishing" }, error: null };
+  } } };
+  await assert.rejects(adapter(client, async () => ({ ok: false })).signInWithProvider("apple"), /проверить доступность/);
+  assert.equal(started, false);
+  await assert.rejects(adapter(client, async () => { throw new Error("network unavailable"); }).signInWithProvider("discord"), /network/);
+  assert.equal(started, false);
+  await assert.rejects(adapter(client, async () => ({ ok: true, json: async () => ({ external: { google: true } }) })).signInWithProvider("google"), /открыть страницу/);
+  const expectedError = { message: "provider error" };
+  client.auth.signInWithOAuth = async () => ({ data: null, error: expectedError });
+  const result = await adapter(client, async () => ({ ok: true, json: async () => ({ external: { google: true } }) })).signInWithProvider("google");
+  assert.equal(result.error, expectedError);
+});
 test("cloud signup and password recovery return to the configured landing page", async () => {
   let signup, reset;
   const auth = adapter({ auth: {

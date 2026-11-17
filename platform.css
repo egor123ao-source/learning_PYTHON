@@ -9,3 +9,14 @@ dialog{border:1px solid var(--line);border-radius:20px;padding:36px;width:min(46
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important;animation:none!important}}
 
 .hero-copy,.hero-art{min-width:0}.code-window{max-width:100%}
+.social-auth{display:grid;gap:10px;margin:18px 0}
+.social-auth[hidden]{display:none}
+.social-button{min-height:46px;font-size:13px}
+.social-button[data-provider="discord"]{border-color:#5865f2;color:#454fc4}
+.social-button[data-provider="apple"]{background:#202020;color:#fff;border-color:#202020}
+.social-button[data-provider="apple"]:hover{background:#383838}
+.social-button:disabled{opacity:.55;cursor:wait}
+.social-note{font-size:11px!important;line-height:1.6;margin:4px 0!important}
+.social-note a{text-decoration:underline;text-underline-offset:3px}
+.auth-divider{display:flex;align-items:center;gap:12px;font-size:11px!important;margin:8px 0 0!important}
+.auth-divider:before,.auth-divider:after{content:"";flex:1;height:1px;background:var(--line,#ddd)}

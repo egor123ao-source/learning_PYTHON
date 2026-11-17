@@ -56,6 +56,32 @@
     async signIn(email, password) {
       return client.auth.signInWithPassword({ email, password });
     },
+    async signInWithProvider(provider) {
+      const names = { google: "Google", discord: "Discord", apple: "Apple" };
+      if (!Object.hasOwn(names, provider)) throw new Error("Неизвестный способ входа.");
+      // Check every attempt: enabling a provider in the dashboard needs no redeploy.
+      const response = await fetch(new URL("/auth/v1/settings", config.supabaseUrl), {
+        headers: { apikey: config.supabaseAnonKey },
+        cache: "no-store",
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!response.ok) throw new Error("Не удалось проверить доступность входа. Попробуйте позже.");
+      const settings = await response.json();
+      if (settings.external?.[provider] !== true) {
+        throw new Error("Вход через " + names[provider] + " пока не подключён. Используйте почту и пароль.");
+      }
+      const result = await client.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: redirectTo + "?auth=oauth", skipBrowserRedirect: true }
+      });
+      if (!result.error) {
+        const target = new URL(result.data?.url);
+        if (target.origin !== new URL(config.supabaseUrl).origin || target.pathname !== "/auth/v1/authorize") {
+          throw new Error("Не удалось открыть страницу входа. Попробуйте ещё раз.");
+        }
+      }
+      return result;
+    },
     async sendPasswordReset(email) {
       return client.auth.resetPasswordForEmail(email, {
         redirectTo

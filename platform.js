@@ -64,6 +64,58 @@
   // The same auth adapter is shared with the existing lesson application.
   const local = window.APP_CONFIG?.authProvider === "local";
   let user = null, mode = "signup", busy = false;
+  const oauthReturn = new URL(location.href).searchParams.get("auth") === "oauth";
+  const callbackParams = new URLSearchParams(location.hash.slice(1));
+  const callbackError = new URL(location.href).searchParams.get("error") || callbackParams.get("error");
+  const socialPanel = document.createElement("div");
+  socialPanel.className = "social-auth";
+  socialPanel.hidden = local;
+  for (const [provider, name] of [["google", "Google"], ["discord", "Discord"], ["apple", "Apple"]]) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "button secondary full-width social-button";
+    button.dataset.provider = provider;
+    button.textContent = "Войти через " + name;
+    button.addEventListener("click", () => startSocialLogin(provider, name));
+    socialPanel.append(button);
+  }
+  const socialNote = document.createElement("p");
+  socialNote.className = "social-note";
+  socialNote.innerHTML = 'При первом входе создадим аккаунт. Продолжая, вы соглашаетесь с <a href="privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a>.';
+  socialPanel.append(socialNote);
+  const divider = document.createElement("p");
+  divider.className = "auth-divider";
+  divider.textContent = "или по электронной почте";
+  socialPanel.append(divider);
+  $("auth-form").before($("auth-status"), socialPanel);
+  function setBusy(value) {
+    busy = value;
+    $("auth-dialog").setAttribute("aria-busy", String(value));
+    $("auth-submit").disabled = value;
+    socialPanel.querySelectorAll("button").forEach(button => { button.disabled = value; });
+    document.querySelectorAll("[data-auth-mode]").forEach(button => { button.disabled = value; });
+    $("forgot-password").disabled = value;
+  }
+  async function startSocialLogin(provider, name) {
+    if (busy) return;
+    if (!window.APP_AUTH?.signInWithProvider) {
+      status("Сервис входа недоступен. Попробуйте позже.", true);
+      return;
+    }
+    setBusy(true);
+    status("Открываем " + name + "…");
+    let navigating = false;
+    try {
+      const result = await window.APP_AUTH.signInWithProvider(provider);
+      if (result.error) throw result.error;
+      window.location.assign(result.data.url);
+      navigating = true;
+    } catch (error) { status(friendlyError(error), true); }
+    finally { if (!navigating) setBusy(false); }
+  }
+  window.addEventListener("pageshow", event => {
+    if (event.persisted) { setBusy(false); status(""); }
+  });
   const labels = {
     signup: ["Рады знакомству", "Создайте аккаунт, чтобы ваш прогресс был рядом.", "Создать аккаунт"],
     login: ["С возвращением", "Продолжим с того места, где остановились?", "Войти"],
@@ -87,6 +139,7 @@
     $("auth-description").textContent = description;
     $("auth-submit").textContent = submit;
     $("auth-tabs").hidden = !["signup", "login"].includes(mode);
+    socialPanel.hidden = local || !["signup", "login"].includes(mode);
     $("auth-form").hidden = mode === "profile";
     $("profile-panel").hidden = mode !== "profile";
     $("profile-email").textContent = user?.email || "";
@@ -112,6 +165,7 @@
     status("");
   }
   function openAuth(next) {
+    if (busy) return;
     setMode(user && next !== "recovery" ? "profile" : next);
     if (!$("auth-dialog").open) $("auth-dialog").showModal();
   }
@@ -141,6 +195,7 @@
     if (/email not confirmed/i.test(message)) return "Подтвердите почту по ссылке из письма, затем войдите.";
     if (/rate limit|too many/i.test(message)) return "Слишком много попыток. Попробуйте позже.";
     if (/fetch|network/i.test(message)) return "Нет связи с сервисом регистрации. Попробуйте позже.";
+    if (error?.name === "TimeoutError" || error?.name === "AbortError") return "Сервис входа долго не отвечает. Попробуйте ещё раз.";
     return message || "Не удалось выполнить действие. Попробуйте ещё раз.";
   }
   function updateUser(next) {
@@ -155,8 +210,8 @@
     if (busy || !$("auth-form").reportValidity()) return;
     if (!window.APP_AUTH) { status("Сервис регистрации недоступен. Попробуйте позже; уроки доступны без входа.", true); return; }
     const submittedMode = mode, email = $("auth-email").value.trim(), password = $("auth-password").value;
-    busy = true;
-    $("auth-submit").disabled = true; $("auth-form").setAttribute("aria-busy", "true");
+    setBusy(true);
+    $("auth-form").setAttribute("aria-busy", "true");
     status("Секунду, выполняем запрос…");
     try {
       let result;
@@ -173,7 +228,7 @@
       else if (submittedMode === "reset") status("Если для этого адреса есть аккаунт, на почту придёт ссылка для восстановления.");
       else if (submittedMode === "recovery") { setMode("profile"); $("profile-status").textContent = "Пароль обновлён."; }
     } catch (error) { status(friendlyError(error), true); }
-    finally { busy = false; $("auth-submit").disabled = false; $("auth-form").removeAttribute("aria-busy"); }
+    finally { setBusy(false); $("auth-form").removeAttribute("aria-busy"); }
   });
   $("logout").addEventListener("click", async () => {
     $("logout").disabled = true;
@@ -192,11 +247,23 @@
     });
     window.APP_AUTH.getSession().then(result => {
       if (!result.error) updateUser(result.data?.session?.user || null);
+      if (oauthReturn) {
+        openAuth("login");
+        if (!user || result.error || callbackError) {
+          status(callbackError === "access_denied" ? "Вход отменён. Выберите способ входа и попробуйте снова." : "Не удалось завершить вход. Попробуйте снова в этом браузере.", true);
+        }
+        const cleanUrl = new URL(location.href);
+        ["auth", "code", "error", "error_code", "error_description"].forEach(key => cleanUrl.searchParams.delete(key));
+        cleanUrl.hash = "";
+        history.replaceState(null, "", cleanUrl);
+      }
       if (location.hash === "#login" || location.hash === "#signup" || location.hash === "#reset") openAuth(location.hash.slice(1));
-    }).catch(() => {});
+    }).catch(() => {
+      if (oauthReturn) { openAuth("login"); status("Не удалось завершить вход. Попробуйте ещё раз.", true); }
+    });
   }
   const authError = new URLSearchParams(location.hash.slice(1)).get("error_description");
-  if (authError) { openAuth("login"); status("Ссылка устарела или недействительна. Запросите восстановление ещё раз.", true); }
+  if (authError && !oauthReturn) { openAuth("login"); status("Ссылка устарела или недействительна. Запросите восстановление ещё раз.", true); }
 
   const quiz = [
     { title: "Что вам интереснее?", options: ["Создавать программы и сайты", "Находить закономерности в данных", "Придумывать удобные интерфейсы"] },
