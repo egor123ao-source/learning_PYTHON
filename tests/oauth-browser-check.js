@@ -3,10 +3,10 @@ async page => {
   const testPage = await context.newPage();
   const navigationCheck = async page => {
   const check = (value, message) => { if (!value) throw new Error(message); };
-  await page.route("**/auth/v1/settings", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ external: { google: false, discord: false, apple: false } }) }));
+  await page.route("**/auth/v1/settings", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ external: { google: false, discord: false } }) }));
   await page.goto("http://localhost:3100/#login");
   await page.locator("#auth-dialog").waitFor({ state: "visible" });
-  for (const name of ["Google", "Discord", "Apple"]) {
+  for (const name of ["Google", "Discord"]) {
     await page.getByRole("button", { name: "Войти через " + name, exact: true }).click();
     await page.waitForFunction(name => document.getElementById("auth-status").textContent.includes(name + " пока не подключён"), name);
     check(await page.locator("#auth-submit").isEnabled(), "Email login locked after " + name);
@@ -16,7 +16,7 @@ async page => {
   await page.getByRole("button", { name: "Назад ко входу", exact: true }).click();
   await page.getByRole("button", { name: "Регистрация", exact: true }).click();
   await page.setViewportSize({ width: 375, height: 812 });
-  check(await page.locator(".social-button:visible").count() === 3, "Missing mobile buttons");
+  check(await page.locator(".social-button:visible").count() === 2, "Missing mobile buttons");
   const rect = await page.locator("#auth-dialog").boundingBox();
   check(rect.x >= 0 && rect.x + rect.width <= 376, "Mobile dialog overflows");
   await page.screenshot({ path: ".playwright-cli/oauth-mobile.png" });
@@ -24,12 +24,12 @@ async page => {
   await page.waitForFunction(() => document.getElementById("auth-status").textContent.includes("Вход отменён"));
   check(!new URL(page.url()).searchParams.has("auth"), "Callback URL not cleaned");
   await page.route("**/auth/v1/settings", route => route.fulfill({
-    status: 200, contentType: "application/json", body: JSON.stringify({ external: { google: true, discord: true, apple: true } })
+    status: 200, contentType: "application/json", body: JSON.stringify({ external: { google: true, discord: true } })
   }));
   await page.route("**/auth/v1/authorize?**", route => route.fulfill({
     status: 200, contentType: "text/html", body: "<h1>OAuth navigation intercepted for test</h1>"
   }));
-  for (const provider of ["google", "discord", "apple"]) {
+  for (const provider of ["google", "discord"]) {
     await page.goto("http://localhost:3100/#login");
     await page.locator("#auth-dialog").waitFor({ state: "visible" });
     await page.locator('[data-provider="' + provider + '"]').click();
@@ -40,7 +40,7 @@ async page => {
     check(url.searchParams.get("code_challenge_method").toLowerCase() === "s256", "PKCE missing");
     check(url.searchParams.get("code_challenge").length > 30, "PKCE challenge missing");
   }
-  return "PASS: disabled providers, retry, recovery visibility, 375px dialog, cancellation, SDK navigation and PKCE for all three providers. Real provider sign-in still requires dashboard setup.";
+  return "PASS: disabled providers, retry, recovery visibility, 375px dialog, cancellation, SDK navigation and PKCE for both providers. Real provider sign-in still requires dashboard setup.";
 };
   const callbackCheck = async page => {
   const now = Math.floor(Date.now() / 1000);

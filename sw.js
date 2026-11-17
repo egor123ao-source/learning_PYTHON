@@ -1,4 +1,4 @@
-const CACHE_NAME = "kod-python-v17";
+const CACHE_NAME = "kod-python-v18";
 const APP_FILES = [
   "./",
   "./index.html",

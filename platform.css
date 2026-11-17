@@ -13,8 +13,6 @@ dialog{border:1px solid var(--line);border-radius:20px;padding:36px;width:min(46
 .social-auth[hidden]{display:none}
 .social-button{min-height:46px;font-size:13px}
 .social-button[data-provider="discord"]{border-color:#5865f2;color:#454fc4}
-.social-button[data-provider="apple"]{background:#202020;color:#fff;border-color:#202020}
-.social-button[data-provider="apple"]:hover{background:#383838}
 .social-button:disabled{opacity:.55;cursor:wait}
 .social-note{font-size:11px!important;line-height:1.6;margin:4px 0!important}
 .social-note a{text-decoration:underline;text-underline-offset:3px}

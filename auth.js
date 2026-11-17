@@ -57,7 +57,7 @@
       return client.auth.signInWithPassword({ email, password });
     },
     async signInWithProvider(provider) {
-      const names = { google: "Google", discord: "Discord", apple: "Apple" };
+      const names = { google: "Google", discord: "Discord" };
       if (!Object.hasOwn(names, provider)) throw new Error("Неизвестный способ входа.");
       // Check every attempt: enabling a provider in the dashboard needs no redeploy.
       const response = await fetch(new URL("/auth/v1/settings", config.supabaseUrl), {

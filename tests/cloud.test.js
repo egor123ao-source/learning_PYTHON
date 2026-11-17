@@ -20,7 +20,7 @@ function adapter(client, fetchImpl) {
   vm.runInNewContext(fs.readFileSync(path.join(root, "auth.js"), "utf8"), context);
   return context.window.APP_AUTH;
 }
-test("OAuth uses PKCE client and returns all three providers to the landing page", async () => {
+test("OAuth uses PKCE client and returns both providers to the landing page", async () => {
   const calls = [];
   const auth = adapter({ auth: {
     signInWithOAuth: async values => {
@@ -31,9 +31,9 @@ test("OAuth uses PKCE client and returns all three providers to the landing page
     assert.equal(String(url), "https://test.supabase.co/auth/v1/settings");
     assert.equal(options.headers.apikey, "public-key");
     assert.equal(options.cache, "no-store");
-    return { ok: true, json: async () => ({ external: { google: true, discord: true, apple: true } }) };
+    return { ok: true, json: async () => ({ external: { google: true, discord: true } }) };
   });
-  for (const provider of ["google", "discord", "apple"]) {
+  for (const provider of ["google", "discord"]) {
     const result = await auth.signInWithProvider(provider);
     assert.equal(result.error, null);
     assert.equal(calls.at(-1).provider, provider);
@@ -68,7 +68,7 @@ test("OAuth fails safely on settings errors and unsafe redirect URLs", async () 
     started = true;
     return { data: { url: "https://example.test/phishing" }, error: null };
   } } };
-  await assert.rejects(adapter(client, async () => ({ ok: false })).signInWithProvider("apple"), /проверить доступность/);
+  await assert.rejects(adapter(client, async () => ({ ok: false })).signInWithProvider("google"), /проверить доступность/);
   assert.equal(started, false);
   await assert.rejects(adapter(client, async () => { throw new Error("network unavailable"); }).signInWithProvider("discord"), /network/);
   assert.equal(started, false);

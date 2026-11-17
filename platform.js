@@ -70,7 +70,7 @@
   const socialPanel = document.createElement("div");
   socialPanel.className = "social-auth";
   socialPanel.hidden = local;
-  for (const [provider, name] of [["google", "Google"], ["discord", "Discord"], ["apple", "Apple"]]) {
+  for (const [provider, name] of [["google", "Google"], ["discord", "Discord"]]) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "button secondary full-width social-button";
