@@ -3,7 +3,7 @@ const path = require("node:path");
 
 const outputDirectory = process.env.VERCEL_OUTPUT_DIR || path.join(__dirname, "dist");
 const publicFiles = [
-  "index.html", "learn.html", "platform.css", "platform.js", "local-auth.js",
+  "index.html", "learn.html", "platform.css", "platform.js", "learning-paths.js", "catalog.js", "route-cover.webp", "local-auth.js",
   "styles.css", "app.js", "translations.js", "course-catalog.js", "python-worker.js",
   "config.js", "auth.js", "manifest.json", "sw.js", "icon.svg", "robots.txt",
   "404.html", "privacy.html", "icon-192.png", "icon-512.png", "social-preview.png"

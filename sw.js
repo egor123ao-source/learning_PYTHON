@@ -1,10 +1,13 @@
-const CACHE_NAME = "kod-python-v18";
+const CACHE_NAME = "kod-python-v19";
 const APP_FILES = [
   "./",
   "./index.html",
   "./learn.html",
   "./platform.css",
   "./platform.js",
+  "./learning-paths.js",
+  "./catalog.js",
+  "./route-cover.webp",
   "./local-auth.js",
   "./privacy.html",
   "./styles.css",

@@ -15,10 +15,11 @@ const mimeTypes = {
   ".png": "image/png",
   ".svg": "image/svg+xml",
   ".txt": "text/plain; charset=utf-8",
+  ".webp": "image/webp",
   ".webmanifest": "application/manifest+json"
 };
 const publicFiles = new Set([
-  "index.html", "learn.html", "platform.css", "platform.js", "local-auth.js", "styles.css", "app.js", "translations.js", "course-catalog.js",
+  "index.html", "learn.html", "platform.css", "platform.js", "learning-paths.js", "catalog.js", "route-cover.webp", "local-auth.js", "styles.css", "app.js", "translations.js", "course-catalog.js",
   "python-worker.js", "config.js", "auth.js", "manifest.json", "sw.js", "icon.svg", "robots.txt", "404.html", "privacy.html",
   "icon-192.png", "icon-512.png", "social-preview.png"
 ]);

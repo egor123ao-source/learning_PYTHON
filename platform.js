@@ -1,50 +1,6 @@
 (() => {
   "use strict";
   const $ = id => document.getElementById(id);
-  const courses = [
-    { title: "Python с нуля", provider: "Код · свой тренажёр", category: "code", free: true, color: "peach", symbol: "Py", label: "Начните здесь", meta: "90 уроков · 3 уровня", description: "От первой строки до собственных программ. С теорией, тестами и практикой в браузере.", url: "learn.html", keywords: "питон программирование разработка" },
-    { title: "JavaScript", provider: "Code Basics", category: "code", free: true, color: "butter", symbol: "JS", label: "Бесплатный курс", meta: "Основы языка", description: "Познакомьтесь с языком интерактивных сайтов. Изучайте основы и решайте упражнения.", url: "https://code-basics.com/ru/languages/javascript", keywords: "джаваскрипт frontend веб сайты" },
-    { title: "Аналитика данных", provider: "Яндекс Практикум", category: "data", free: false, color: "sage", symbol: "▂▅█", label: "Новая профессия", meta: "Программа школы", description: "Находите смысл в цифрах и превращайте данные в понятные выводы и решения.", url: "https://practicum.yandex.kz/data-analyst/", keywords: "анализ sql excel data" },
-    { title: "Веб-дизайн", provider: "Skillbox", category: "design", free: false, color: "lavender", symbol: "Aa", label: "Творческое направление", meta: "Программа школы", description: "Создавайте удобные интерфейсы. Изучайте композицию, визуальный язык и работу с макетами.", url: "https://skillbox.kz/course/profession-webdesigner/", keywords: "figma интерфейсы ux ui дизайн" },
-    { title: "Практика программирования", provider: "Coddy", category: "code", free: true, color: "blue", symbol: "</>", label: "Интерактивные задания", meta: "В своём темпе", description: "Закрепляйте знания короткими упражнениями. Выберите язык и решайте задачи шаг за шагом.", url: "https://coddy.tech/", keywords: "python java javascript html css питон" },
-    { title: "Старт в IT", provider: "GeekBrains", category: "code", free: false, color: "rose", symbol: "↗", label: "Выбор профессии", meta: "Каталог программ", description: "Исследуйте направления разработки и найдите программу для нового карьерного старта.", url: "https://geekbrains.kz/", keywords: "профессия разработчик обучение карьера" }
-  ];
-  let filter = "all";
-  function renderCourses() {
-    const query = $("course-search").value.trim().toLocaleLowerCase("ru");
-    const selected = courses.filter(course =>
-      (filter === "all" || (filter === "free" ? course.free : course.category === filter)) &&
-      [course.title, course.provider, course.keywords].join(" ").toLocaleLowerCase("ru").includes(query)
-    );
-    $("course-grid").replaceChildren(...selected.map(course => {
-      const article = document.createElement("article");
-      article.className = "course-card";
-      // All card content is owned static data; user search is never injected into HTML.
-      article.innerHTML = '<div class="course-art ' + course.color + '"><span class="course-tag">' + course.label +
-        '</span><span class="course-symbol" aria-hidden="true"></span></div><div class="course-content"><div class="course-provider"><span>' +
-        course.provider + '</span><span>' + (course.free ? "Бесплатно" : "На сайте школы") +
-        '</span></div><h3>' + course.title + '</h3><p>' + course.description +
-        '</p><div class="course-bottom"><span>' + course.meta + '</span><a><span aria-hidden="true">↗</span></a></div></div>';
-      article.querySelector(".course-symbol").textContent = course.symbol;
-      const link = article.querySelector("a");
-      link.href = course.url;
-      link.prepend(course.url.startsWith("https") ? "На сайт школы " : "Начать учиться ");
-      link.setAttribute("aria-label", course.title + (course.url.startsWith("https") ? " — на сайте " + course.provider + ", новая вкладка" : " — открыть тренажёр"));
-      if (course.url.startsWith("https")) { link.target = "_blank"; link.rel = "noopener noreferrer"; }
-      return article;
-    }));
-    $("result-count").textContent = "Найдено направлений: " + selected.length;
-    $("empty-state").hidden = selected.length > 0;
-    document.querySelectorAll("[data-filter]").forEach(button => {
-      button.classList.toggle("active", button.dataset.filter === filter);
-      button.setAttribute("aria-pressed", String(button.dataset.filter === filter));
-    });
-  }
-  document.querySelectorAll("[data-filter]").forEach(button => button.addEventListener("click", () => { filter = button.dataset.filter; renderCourses(); }));
-  $("course-search").addEventListener("input", renderCourses);
-  $("reset-filters").addEventListener("click", () => { filter = "all"; $("course-search").value = ""; renderCourses(); });
-  renderCourses();
-
   const menu = document.querySelector(".menu-toggle");
   function closeMenu() { menu.setAttribute("aria-expanded", "false"); $("navigation").classList.remove("open"); }
   menu.addEventListener("click", () => {
@@ -264,44 +220,6 @@
   }
   const authError = new URLSearchParams(location.hash.slice(1)).get("error_description");
   if (authError && !oauthReturn) { openAuth("login"); status("Ссылка устарела или недействительна. Запросите восстановление ещё раз.", true); }
-
-  const quiz = [
-    { title: "Что вам интереснее?", options: ["Создавать программы и сайты", "Находить закономерности в данных", "Придумывать удобные интерфейсы"] },
-    { title: "Уже пробовали что-то похожее?", options: ["Начинаю с чистого листа", "Немного пробовал, хочу разобраться", "Есть основы, хочу двигаться дальше"] },
-    { title: "Какой старт вам комфортнее?", options: ["Бесплатно попробовать своими руками", "Выбрать профессиональную программу", "Пока посмотреть, что бывает"] }
-  ];
-  let answers = [];
-  function showQuiz() {
-    $("quiz-options").replaceChildren(); $("quiz-back").hidden = answers.length === 0;
-    if (answers.length < 3) {
-      const question = quiz[answers.length];
-      $("quiz-step").textContent = "ВОПРОС " + (answers.length + 1) + " ИЗ 3";
-      $("quiz-title").textContent = question.title;
-      $("quiz-description").textContent = "Здесь нет неправильных ответов.";
-      question.options.forEach((text, index) => {
-        const button = document.createElement("button"); button.className = "quiz-option"; button.textContent = text + " ↗";
-        button.addEventListener("click", () => { answers.push(index); showQuiz(); $("quiz-title").focus(); });
-        $("quiz-options").append(button);
-      });
-    } else {
-      const category = ["code", "data", "design"][answers[0]];
-      $("quiz-step").textContent = "ВАША ТОЧКА СТАРТА";
-      $("quiz-title").textContent = ["Создавайте с помощью кода", "Откройте язык данных", "Делайте сложное удобным"][answers[0]];
-      $("quiz-description").textContent = "Это ориентир для первого шага, а не оценка ваших способностей.";
-      const result = document.createElement("div"); result.className = "quiz-result";
-      const paragraph = document.createElement("p");
-      const experience = ["Начните с основ и небольших упражнений.", "Закрепите основы и найдите пробелы на практике.", "Сравните программы и выберите темы, которых вам пока не хватает."][answers[1]];
-      paragraph.textContent = experience + " " + (answers[2] === 0 ? (category === "design" ? "Попробуйте повторить простой экран в редакторе, прежде чем выбирать большой курс." : "Попробуйте бесплатный Python: он полезен и в разработке, и в анализе данных.") : "В каталоге можно сравнить направления и перейти к программам школ.");
-      result.append(paragraph); $("quiz-options").append(result);
-      const link = document.createElement("a"); link.className = "button primary full-width";
-      link.href = answers[2] === 0 && category !== "design" ? "learn.html" : "#catalog";
-      link.textContent = link.getAttribute("href") === "learn.html" ? "Попробовать Python ↗" : "Посмотреть направления ↗";
-      link.addEventListener("click", () => { filter = category; $("course-search").value = ""; renderCourses(); $("quiz-dialog").close(); });
-      $("quiz-options").append(link);
-    }
-  }
-  [$("open-quiz"), $("banner-quiz")].forEach(button => button.addEventListener("click", () => { answers = []; showQuiz(); $("quiz-dialog").showModal(); }));
-  $("quiz-back").addEventListener("click", () => { answers.pop(); showQuiz(); $("quiz-title").focus(); });
 
   let worker = null, runId = 0, timer;
   function finishRun(text, terminate = false) {
